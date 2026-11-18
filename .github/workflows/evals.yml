@@ -43,6 +43,14 @@ jobs:
           docker compose up -d
           for i in $(seq 1 30); do curl -sf "localhost:8080/search?q=test&format=json" >/dev/null && break; sleep 2; done
 
+      # El caché se borra si pasan 7 días sin usarlo (límite de GitHub; ampliarlo exige método de pago).
+      # Cada corrida lo renueva; si se vence, `make data` vuelve a bajar el libro (~23 MB).
+      - name: Caché del libro de cátedra
+        uses: actions/cache@v4
+        with:
+          path: data/DIAZ-tecnologias-analisis-datos-software-libre.pdf
+          key: sedici-10915-78652-v1
+
       - name: Libro de cátedra (SEDICI, CC BY-NC-SA 4.0; no está en el repo)
         run: make data
 
