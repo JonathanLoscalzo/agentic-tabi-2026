@@ -43,4 +43,4 @@ def model(slug: str | None = None, temperature: float = 0.1) -> OpenAIModel:
 
 
 def judge_model() -> OpenAIModel:
-    return model(os.getenv("TABI_JUDGE_LLM", "anthropic/claude-sonnet-5.5"), temperature=0)
+    return model(os.getenv("TABI_JUDGE_LLM", DEFAULT_LLM), temperature=0)
