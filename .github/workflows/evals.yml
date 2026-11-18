@@ -30,13 +30,8 @@ jobs:
 
       - run: uv sync
 
-      # Modelo de embeddings (~620 MB). Con caché, `ollama pull` solo verifica que esté y no lo baja de nuevo.
-      - name: Caché del modelo embeddinggemma
-        uses: actions/cache@v4
-        with:
-          path: ~/.ollama/models
-          key: ollama-model-embeddinggemma-v1
-
+      # No se cachea el modelo de embeddinggemma (~620 MB): medido, `ollama pull` lo baja en ~4 s en el runner
+      # (más rápido que restaurar el caché) y de todos modos no reutilizaba los archivos cacheados.
       - name: Ollama + embeddinggemma
         run: |
           curl -fsSL https://ollama.com/install.sh | sh
