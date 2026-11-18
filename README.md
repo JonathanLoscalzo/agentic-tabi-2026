@@ -16,7 +16,7 @@ Explicación detallada de cada técnica: [`docs/tecnicas.md`](docs/tecnicas.md) 
 
 ## Setup
 
-> **Material de la cátedra:** los PDFs no están en el repo. Pedilos en la cátedra y copialos en `data/` (ver `data/README.md`) antes de indexar.
+> **Material de la cátedra:** los PDFs no están en el repo. El libro es abierto (SEDICI, CC BY-NC-SA 4.0) y `make index` lo descarga solo. Otro material de la cátedra hay que pedirlo y copiarlo en `data/` (ver `data/README.md`).
 
 ```bash
 make setup      # uv sync + ollama pull embeddinggemma + crea .env (completar OPENROUTER_API_KEY)
@@ -48,7 +48,7 @@ make eval M=openai/gpt-5-mini  # evalúa otro modelo (el juez es siempre TABI_JU
 ```
 
 También se puede correr en GitHub: **Actions → Evals → Run workflow** (solo manual; elegís modelo, técnicas y paralelismo).
-Necesita el secret `OPENROUTER_API_KEY` y, como los PDFs no están en el repo, el secret `DATA_URL`: un link a un `.zip` con los PDFs (por ejemplo, un link firmado de un bucket privado). La tabla de resultados queda en el summary de la corrida.
+Necesita el secret `OPENROUTER_API_KEY`. El libro se descarga de SEDICI en cada corrida (`make data`); el manifiesto de Kimball no se usa en Actions. La tabla de resultados queda en el summary de la corrida.
 
 Resultados en `evals/results/<modelo>__<técnica>.json`. Muestra una línea por caso mientras corre (`-w N` casos en paralelo, 4 por defecto).
 

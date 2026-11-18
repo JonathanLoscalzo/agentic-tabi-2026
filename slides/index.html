@@ -102,9 +102,9 @@
     <line x1="130" y1="100" x2="188" y2="100"/><line x1="340" y1="90" x2="398" y2="55"/><line x1="340" y1="110" x2="398" y2="150"/><line x1="570" y1="45" x2="628" y2="45"/>
   </svg>
   <pre><code class="language-bash">make setup   # deps + ollama pull embeddinggemma + .env
-make index   # data/*.pdf → chroma_db/   (make reindex para rehacerlo)</code></pre>
+make index   # descarga el libro si falta · data/*.pdf → chroma_db/</code></pre>
   <p class="muted" style="font-size:.7em">Cada chunk guarda <code>source</code> y <code>page</code> para poder citar.
-  <strong>Los PDFs no están en el repo:</strong> el material de la cátedra hay que pedirlo en la cátedra y copiarlo en <code>data/</code>.</p>
+  <strong>Los PDFs no están en el repo:</strong> el libro es abierto (SEDICI, CC BY-NC-SA 4.0) y <code>make data</code> lo descarga; otro material de la cátedra hay que pedirlo.</p>
 </section>
 
 <!-- 4 -->
@@ -321,7 +321,7 @@ report = await exp.run_evaluations_async(
     <li>Elegís <strong>modelo</strong>, <strong>técnicas</strong> y casos en paralelo</li>
     <li>En el runner: Ollama + <code>embeddinggemma</code>, SearXNG con docker, indexado y evals</li>
     <li>La tabla de resultados queda en el <strong>summary</strong> de la corrida</li>
-    <li>Secrets: <code>OPENROUTER_API_KEY</code> y <code>DATA_URL</code> (link a un .zip con los PDFs, que no están en el repo)</li>
+    <li>Secret: <code>OPENROUTER_API_KEY</code>. El libro se baja de SEDICI en cada corrida (<code>make data</code>)</li>
   </ul>
 </section>
 

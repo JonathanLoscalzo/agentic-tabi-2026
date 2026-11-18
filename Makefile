@@ -1,9 +1,12 @@
-.PHONY: setup up down index reindex chat ask models eval slides
+.PHONY: data setup up down index reindex chat ask models eval slides
 Q ?= ¿Quién es Ralph Kimball?
 T ?= all
 M ?=
 MODEL = $(if $(M),-m $(M),)
 
+data:         ## descarga el libro de cátedra desde SEDICI (CC BY-NC-SA 4.0)
+	@mkdir -p data
+	@ls data/DIAZ*.pdf >/dev/null 2>&1 || curl -fsSL -o data/DIAZ-tecnologias-analisis-datos-software-libre.pdf 'https://sedici.unlp.edu.ar/bitstream/handle/10915/78652/Documento_completo.pdf-PDFA.pdf?sequence=1&isAllowed=y'
 setup:        ## deps + modelo de embeddings + .env
 	uv sync
 	ollama pull embeddinggemma
@@ -12,7 +15,7 @@ up:           ## SearXNG (búsqueda web para `multi`)
 	docker compose up -d
 down:
 	docker compose down
-index:        ## indexa data/*.pdf en Chroma
+index: data   ## indexa data/*.pdf en Chroma (descarga el libro si falta)
 	uv run tabi index
 reindex:
 	uv run tabi index --rebuild
