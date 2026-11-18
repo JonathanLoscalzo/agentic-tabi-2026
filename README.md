@@ -15,26 +15,33 @@ Embeddings con Ollama (`embeddinggemma`) y Chroma, igual que en los repos anteri
 ## Setup
 
 ```bash
-cp .env.example .env          # completar OPENROUTER_API_KEY
-ollama pull embeddinggemma
-docker compose up -d          # solo para la técnica `multi` (búsqueda web con SearXNG)
-uv sync                       # Python 3.14
-uv run tabi index             # arma Chroma desde data/*.pdf
+make setup      # uv sync + ollama pull embeddinggemma + crea .env (completar OPENROUTER_API_KEY)
+make up         # SearXNG en docker (búsqueda web para `multi`)
+make index      # arma Chroma desde data/*.pdf   (make reindex para rehacerlo)
 ```
+
+Python 3.14. Todos los targets están en el `Makefile`.
 
 ## Uso
 
 ```bash
-uv run tabi ask "¿Quién es Ralph Kimball?"                              # todas las técnicas
-uv run tabi ask "¿Qué es una dimensión?" -t ensemble --show-context    # muestra chunks y prompt armado
+make chat                                          # cliente Streamlit: modelo, técnicas, contexto e índice
+make ask Q="¿Qué es una dimensión?" T=ensemble     # una técnica (T=all para todas)
+make ask Q="..." T=agent M=openai/gpt-5-mini       # con otro modelo de OpenRouter
+make models F=claude                               # lista/filtra los modelos disponibles
 ```
+
+El modelo se elige con `M=<slug de OpenRouter>`, con `-m` en la CLI, o desde el selector del chat.
+Por defecto: `TABI_LLM` en `.env`.
 
 ## Evals (Strands Evals)
 
 ```bash
-uv run python evals/run.py            # compara todas las técnicas
-uv run python evals/run.py -t bm25 -t vector
+make eval                      # todas las técnicas con el modelo por defecto
+make eval M=openai/gpt-5-mini  # evalúa otro modelo (el juez es siempre TABI_JUDGE_LLM)
 ```
+
+Resultados en `evals/results/<modelo>__<técnica>.json`.
 
 ## Slides
 

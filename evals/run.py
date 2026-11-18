@@ -41,12 +41,16 @@ def summary(report):
 
 
 def main():
-    from tabi.config import judge_model
+    from tabi.config import judge_model, use_llm
     from tabi.techniques import TECHNIQUES
 
     p = argparse.ArgumentParser()
     p.add_argument("-t", "--technique", action="append", choices=list(TECHNIQUES))
-    names = p.parse_args().technique or list(TECHNIQUES)
+    p.add_argument("-m", "--model", help="slug de OpenRouter a evaluar (el juez no cambia)")
+    args = p.parse_args()
+    names = args.technique or list(TECHNIQUES)
+    if args.model:
+        use_llm(args.model)
 
     out = Path(__file__).parent / "results"
     out.mkdir(exist_ok=True)
@@ -57,7 +61,7 @@ def main():
             evs.append(ToolCalled(TOOL_CHECK[n], name="tool_called"))
         rep = run(n, TECHNIQUES[n], evs)
         table[n] = summary(rep)
-        (out / f"{n}.json").write_text(json.dumps(rep.model_dump() if hasattr(rep, "model_dump") else rep.to_dict(), ensure_ascii=False, indent=2, default=str))
+        (out / f"{(args.model or 'default').replace('/', '_')}__{n}.json").write_text(json.dumps(rep.model_dump() if hasattr(rep, "model_dump") else rep.to_dict(), ensure_ascii=False, indent=2, default=str))
 
     print(f"\n{'técnica':<12}{'correctness':>12}{'tool_called':>13}")
     for n, s in table.items():

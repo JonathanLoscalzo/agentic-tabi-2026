@@ -38,6 +38,15 @@ def collection():
     )
 
 
+def rebuild() -> int:
+    """Borra la colección y vuelve a indexar."""
+    try:
+        chromadb.PersistentClient(path=str(CHROMA_DIR)).delete_collection(COLLECTION)
+    except Exception:  # no existía
+        pass
+    return build()
+
+
 def build(batch: int = 50) -> int:
     col = collection()
     if col.count():
