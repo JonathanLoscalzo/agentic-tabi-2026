@@ -8,7 +8,8 @@ Todas responden la misma pregunta sobre los libros de `data/`. Cambia **cómo se
 
 - **Indexado** (`src/tabi/index.py`): cada PDF se lee página por página y cada página se corta en chunks.
 - **Chunking**: hasta 1000 caracteres por chunk, avanzando de a 800, así que los últimos 200 caracteres se repiten en el chunk siguiente (solape) y una idea cortada en el borde no se pierde. Un chunk nunca cruza páginas, y cada uno guarda archivo y página para poder citar. El corte es por caracteres, no por oraciones, y el final de cada página puede dar chunks muy cortos. Con los dos PDFs locales salen 441 chunks (largo medio 768). Chunks más chicos buscan con más precisión pero dan menos contexto; más grandes, al revés.
-- **Embeddings y Chroma**: `embeddinggemma` (Ollama, local) convierte cada chunk en un vector de 768 números que representa su significado. Se calculan en lotes de 50 y se guardan en Chroma (`chroma_db/`, distancia coseno) junto con el texto y archivo/página. Si la colección ya tiene datos no se rehace (`make reindex` lo fuerza). Al preguntar, la pregunta se convierte en vector con el mismo modelo y Chroma devuelve los chunks más cercanos.
+- **Embeddings y Chroma**: `embeddinggemma` (Ollama, local) convierte cada chunk en un vector de 768 números que representa su significado. Se calculan en lotes de 50 y se guardan en Chroma (`chroma_db/`, distancia coseno) junto con el texto y archivo/página. Cada chunk se guarda con un id que es su posición en la lista de chunks. Si la colección ya tiene datos, `make index` no hace nada. Al preguntar, la pregunta se convierte en vector con el mismo modelo y Chroma devuelve los chunks más cercanos.
+- **Reindexar cuando cambian los PDFs**: como `make index` salta si ya hay datos, no detecta PDFs nuevos, quitados o reemplazados. Después de cualquier cambio en `data/` corré `make reindex`. Si no, Chroma sigue con los ids y textos viejos mientras BM25, que se arma en cada arranque leyendo los PDFs actuales, usa los nuevos: el `ensemble` puede fusionar como si fueran el mismo chunk dos que no lo son.
 - **BM25**: no usa Chroma ni embeddings. Se arma en memoria cada vez que arranca, leyendo los PDFs y cortando los mismos chunks. Tokeniza en minúsculas con `\w+`, sin stemming ni stopwords ("dimensión" y "dimensiones" son palabras distintas), y usa los parámetros por defecto de `rank-bm25` (`k1=1.5`, `b=0.75`). Cada palabra de la pregunta suma un peso, mayor si es rara en el corpus, si aparece varias veces en el chunk (con rendimientos decrecientes) y si el chunk es corto.
 - **Armado del contexto**: los `K=4` mejores chunks se numeran y se pegan en un prompt (`RAG_PROMPT`). El prompt le pide al modelo responder **solo** con ese contexto, en máximo tres oraciones, y citar `(archivo, p. N)`.
 - **Modelos**: los LLM se llaman por OpenRouter a través de Strands (`OpenAIModel` con `base_url` de OpenRouter). Se elige con `TABI_LLM`, `-m` o el selector del chat.
@@ -21,6 +22,42 @@ Todas responden la misma pregunta sobre los libros de `data/`. Cambia **cómo se
 - **Fortaleza**: rápida y barata.
 - **Debilidad**: no cita fuentes y puede inventar datos del libro.
 - **Para qué sirve**: medir cuánto aportan las demás técnicas.
+
+## Ejemplo real: qué devuelve cada búsqueda
+
+Pregunta: «¿Quién es Ralph Kimball?», con los dos PDFs indexados (441 chunks).
+
+**Chroma** (distancia coseno: menor es más cercano):
+
+| # | id | distancia | fuente | empieza con |
+|---|---|---:|---|---|
+| 1 | 123 | 0.663 | Díaz p. 45 | "45 CAPÍTULO 3 Arquitectura del Data Warehouse Ralph Kimball propone el Data Warehouse…" |
+| 2 | 125 | 0.667 | Díaz p. 45 | "o- puestas en algún momento confluyen y más allá de cuales es mejor…" |
+| 3 | 408 | 0.709 | Kimball p. 1 | "http://www.kimballgroup.com/1997/08/a-dimensional-modeling-manifesto/ By Ralph Kimball…" |
+| 4 | 227 | 0.719 | Díaz p. 78 | "do." (un chunk de 3 caracteres: el corte por caracteres deja restos) |
+
+**BM25** (puntaje; las columnas son cuántas veces aparece cada palabra de la pregunta en el chunk):
+
+| # | id | puntaje | quién | es | ralph | kimball | largo | fuente |
+|---|---|---:|---:|---:|---:|---:|---:|---|
+| 1 | 125 | 11.09 | 0 | 3 | 1 | 1 | 511 | Díaz p. 45 |
+| 2 | 123 | 10.93 | 0 | 1 | 2 | 2 | 1000 | Díaz p. 45 |
+| 3 | 85 | 9.03 | 0 | 5 | 1 | 1 | 1000 | Díaz p. 32 |
+| 4 | 41 | 7.13 | 1 | 2 | 0 | 0 | 712 | Díaz p. 14 |
+
+- El #1 le gana al #2 aunque menciona menos a Kimball: es más corto (511 contra 1000 caracteres) y BM25 normaliza por largo.
+- El #4 no habla de Kimball: entró por «quién» y «es», porque no se quitan stopwords.
+
+**Fusión del ensemble** (RRF, posición 0-based, peso 0.5 por lista; ids de arriba):
+
+| id | rango BM25 | rango Chroma | puntaje RRF |
+|---|---:|---:|---:|
+| 125 | 1 | 2 | 0.5/60 + 0.5/61 = 0.01653 |
+| 123 | 2 | 1 | 0.5/61 + 0.5/60 = 0.01653 |
+| 408 | 5 | 3 | 0.5/64 + 0.5/62 = 0.01588 |
+| 315 | 8 | 6 | 0.5/67 + 0.5/65 = 0.01515 |
+
+Los chunks 123 y 125 aparecen en ambas listas, así que suben. El 85 y el 41 (solo BM25) y el 227 (solo Chroma) quedan afuera de los 4 primeros.
 
 ## bm25 — Búsqueda léxica
 

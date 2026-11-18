@@ -19,9 +19,11 @@ Explicación detallada de cada técnica: [`docs/tecnicas.md`](docs/tecnicas.md) 
 > **Material de la cátedra:** los PDFs no están en el repo. El libro es abierto (SEDICI, CC BY-NC-SA 4.0) y `make index` lo descarga solo. Otro material de la cátedra hay que pedirlo y copiarlo en `data/` (ver `data/README.md`).
 
 ```bash
-make setup      # uv sync + ollama pull embeddinggemma + crea .env (completar OPENROUTER_API_KEY)
+make doctor     # chequea uv, Ollama, docker, key, datos e índice y dice cómo arreglar lo que falte
+make setup      # chequea herramientas + uv sync + ollama pull embeddinggemma + crea .env (completar OPENROUTER_API_KEY)
 make up         # SearXNG en docker (búsqueda web para `multi`)
-make index      # arma Chroma desde data/*.pdf   (make reindex para rehacerlo)
+make index      # arma Chroma desde data/*.pdf
+make reindex    # rehacelo cada vez que cambies los PDFs de data/ (index no detecta cambios)
 ```
 
 Python 3.14. Todos los targets están en el `Makefile`.
