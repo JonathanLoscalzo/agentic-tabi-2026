@@ -1,0 +1,66 @@
+name: Evals
+
+# Solo manual: Actions > Evals > Run workflow. No corre en push ni en schedule.
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: "Modelo de OpenRouter a evaluar (vacío = el por defecto)"
+        default: ""
+      techniques:
+        description: "Técnicas separadas por coma (all, o ej. bm25,ensemble,agent)"
+        default: "all"
+      workers:
+        description: "Casos en paralelo"
+        default: "4"
+
+permissions:
+  contents: read
+
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - run: uv sync
+
+      - name: Ollama + embeddinggemma
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+          for i in $(seq 1 30); do curl -sf localhost:11434 >/dev/null && break; sleep 2; done
+          ollama pull embeddinggemma
+
+      - name: SearXNG (búsqueda web para multi)
+        run: |
+          docker compose up -d
+          for i in $(seq 1 30); do curl -sf "localhost:8080/search?q=test&format=json" >/dev/null && break; sleep 2; done
+
+      - run: uv run tabi index
+
+      - name: Evals
+        env:
+          MODEL: ${{ inputs.model }}
+          TECHNIQUES: ${{ inputs.techniques }}
+          WORKERS: ${{ inputs.workers }}
+        run: |
+          args=(-w "$WORKERS")
+          [ -n "$MODEL" ] && args+=(-m "$MODEL")
+          if [ "$TECHNIQUES" != "all" ]; then
+            IFS=, read -ra ts <<< "$TECHNIQUES"
+            for t in "${ts[@]}"; do args+=(-t "$t"); done
+          fi
+          uv run python evals/run.py "${args[@]}"   # escribe la tabla en el summary de la corrida
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: evals-results
+          path: |
+            evals/results/
+            tmp/conversations/

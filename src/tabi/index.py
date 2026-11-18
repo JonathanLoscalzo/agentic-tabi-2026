@@ -1,6 +1,7 @@
 """Indexado: PDFs -> chunks -> Chroma (embeddings Ollama) + BM25 en memoria."""
 import logging
 import re
+import threading
 from functools import lru_cache
 
 import chromadb
@@ -32,8 +33,21 @@ def embed(texts: list[str]) -> list[list[float]]:
     return ollama.embed(model=EMBEDDING, input=texts).embeddings
 
 
+_lock = threading.Lock()
+_chroma = None
+
+
+def _client():
+    """Un solo cliente por proceso. Con lock: crear varios a la vez (evals en paralelo) falla con 'tenant default_tenant'."""
+    global _chroma
+    with _lock:
+        if _chroma is None:
+            _chroma = chromadb.PersistentClient(path=str(CHROMA_DIR))
+        return _chroma
+
+
 def collection():
-    return chromadb.PersistentClient(path=str(CHROMA_DIR)).get_or_create_collection(
+    return _client().get_or_create_collection(
         COLLECTION, metadata={"hnsw:space": "cosine"}
     )
 
@@ -41,7 +55,7 @@ def collection():
 def rebuild() -> int:
     """Borra la colección y vuelve a indexar."""
     try:
-        chromadb.PersistentClient(path=str(CHROMA_DIR)).delete_collection(COLLECTION)
+        _client().delete_collection(COLLECTION)
     except Exception:  # no existía
         pass
     return build()
