@@ -43,6 +43,16 @@ jobs:
           docker compose up -d
           for i in $(seq 1 30); do curl -sf "localhost:8080/search?q=test&format=json" >/dev/null && break; sleep 2; done
 
+      - name: Datos de la cátedra (no están en el repo)
+        env:
+          DATA_URL: ${{ secrets.DATA_URL }}
+        run: |
+          if ! ls data/*.pdf >/dev/null 2>&1; then
+            [ -n "$DATA_URL" ] || { echo "::error::Faltan los PDFs. Cargá el secret DATA_URL con un link a un .zip con los PDFs de la cátedra"; exit 1; }
+            curl -fsSL "$DATA_URL" -o /tmp/data.zip
+            unzip -qo /tmp/data.zip -d data
+          fi
+
       - run: uv run tabi index
 
       - name: Evals

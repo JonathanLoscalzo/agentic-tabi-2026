@@ -7,3 +7,6 @@ evals/results/
 *.egg-info/
 .DS_Store
 tmp/
+# material de la cátedra: no se sube
+data/*
+!data/README.md
