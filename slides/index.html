@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>agentic-tabi-2026</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<style>
+  :root {
+    --bg: #fafaf7; --fg: #1d1d1b; --muted: #66665f; --accent: #0b6e4f; --accent2: #b4540a;
+    --card: #ffffff; --line: #d8d8d0; --code-bg: #f0efe8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15161a; --fg: #ececea; --muted: #9a9a93; --accent: #4fd1a1; --accent2: #f0a35a;
+      --card: #1e2026; --line: #34363e; --code-bg: #101114;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15161a; --fg: #ececea; --muted: #9a9a93; --accent: #4fd1a1; --accent2: #f0a35a;
+    --card: #1e2026; --line: #34363e; --code-bg: #101114;
+  }
+  html, body { background: var(--bg); }
+  .reveal { color: var(--fg); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 30px; }
+  .reveal .slides section { text-align: left; }
+  .reveal h1, .reveal h2, .reveal h3 { color: var(--fg); text-transform: none; font-weight: 700; letter-spacing: -0.01em; }
+  .reveal h1 { font-size: 2.2em; } .reveal h2 { font-size: 1.5em; margin-bottom: .5em; } .reveal h3 { font-size: 1em; color: var(--accent); }
+  .reveal p, .reveal li { line-height: 1.4; }
+  .reveal ul { margin-left: 1em; display: block; }
+  .reveal .muted { color: var(--muted); }
+  .reveal .accent { color: var(--accent); }
+  .reveal pre { width: 100%; box-shadow: none; font-size: .5em; margin: .6em 0; }
+  .reveal pre code { background: var(--code-bg); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: .8em 1em; max-height: 520px; }
+  .reveal code { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+  .reveal p code, .reveal li code, .reveal td code { background: var(--code-bg); border: 1px solid var(--line); border-radius: 4px; padding: 0 .3em; font-size: .85em; }
+  .row { display: flex; gap: 1.2em; align-items: stretch; }
+  .row > * { flex: 1; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: .6em .9em; }
+  .reveal table { font-size: .6em; border-collapse: collapse; width: 100%; }
+  .reveal th, .reveal td { border-bottom: 1px solid var(--line); padding: .45em .6em; text-align: left; }
+  .reveal th { color: var(--accent); }
+  .tag { display: inline-block; font-size: .55em; border: 1px solid var(--accent); color: var(--accent); border-radius: 99px; padding: 0 .7em; margin-bottom: .6em; }
+  svg { width: 100%; height: auto; max-height: 230px; }
+  svg .b { fill: var(--card); stroke: var(--line); stroke-width: 1.5; }
+  svg .h { fill: var(--card); stroke: var(--accent); stroke-width: 2; }
+  svg .w { fill: var(--card); stroke: var(--accent2); stroke-width: 2; }
+  svg text { fill: var(--fg); font: 15px system-ui, sans-serif; text-anchor: middle; }
+  svg .s { fill: var(--muted); font-size: 12px; }
+  svg line, svg path.a { stroke: var(--muted); stroke-width: 1.8; fill: none; marker-end: url(#ar); }
+  #themeBtn { position: fixed; top: 10px; right: 12px; z-index: 30; background: var(--card); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; cursor: pointer; font-size: 14px; }
+  .reveal .progress { color: var(--accent); }
+  .reveal .controls { color: var(--accent); }
+</style>
+</head>
+<body>
+<button id="themeBtn" aria-label="Cambiar tema">◐ tema</button>
+
+<!-- marker de flecha compartido por todos los diagramas -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#888"/></marker>
+</defs></svg>
+
+<div class="reveal"><div class="slides">
+
+<!-- 1 -->
+<section>
+  <span class="tag">TABI · 2026</span>
+  <h1>agentic-tabi-<span class="accent">2026</span></h1>
+  <p>Hacer preguntas sobre el libro de cátedra con distintas técnicas, en un mismo código, y compararlas.</p>
+  <p class="muted" style="font-size:.7em">Strands Agents · OpenRouter · Chroma + BM25 · Strands Evals</p>
+  <aside class="notes">Objetivo: mostrar cómo cambia la respuesta según cómo se arma el contexto y quién decide qué buscar.</aside>
+</section>
+
+<!-- 2 -->
+<section>
+  <h2>El problema: un LLM sin contexto inventa</h2>
+  <div class="row">
+    <div class="card">
+      <h3>Sin contexto</h3>
+      <p>«¿Qué es un cubo?»</p>
+      <p class="muted">El modelo responde con lo que recuerda: genérico, sin fuente, a veces falso.</p>
+    </div>
+    <div class="card">
+      <h3>Con contexto</h3>
+      <p>Buscamos fragmentos del libro y se los pasamos junto a la pregunta.</p>
+      <p class="muted">Respuesta anclada en el texto, con cita (archivo, p. N).</p>
+    </div>
+  </div>
+  <p>La pregunta del taller: <strong>¿cómo conseguimos el mejor contexto?</strong></p>
+</section>
+
+<!-- 3 -->
+<section>
+  <h2>Indexado: de PDF a índices</h2>
+  <svg viewBox="0 0 900 200" role="img" aria-label="Pipeline de indexado">
+    <rect class="b" x="10" y="70" width="120" height="60" rx="10"/><text x="70" y="105">PDFs</text>
+    <rect class="b" x="190" y="70" width="150" height="60" rx="10"/><text x="265" y="97">Chunks</text><text class="s" x="265" y="116">1000 / overlap 200</text>
+    <rect class="h" x="400" y="15" width="170" height="60" rx="10"/><text x="485" y="40">embeddinggemma</text><text class="s" x="485" y="58">Ollama local</text>
+    <rect class="h" x="630" y="15" width="150" height="60" rx="10"/><text x="705" y="50">Chroma (cosine)</text>
+    <rect class="h" x="400" y="125" width="170" height="60" rx="10"/><text x="485" y="160">BM25 en memoria</text>
+    <line x1="130" y1="100" x2="188" y2="100"/><line x1="340" y1="90" x2="398" y2="55"/><line x1="340" y1="110" x2="398" y2="150"/><line x1="570" y1="45" x2="628" y2="45"/>
+  </svg>
+  <pre><code class="language-bash">uv run ollama pull embeddinggemma   # una vez
+uv run tabi index                   # data/*.pdf → chroma_db/</code></pre>
+  <p class="muted" style="font-size:.7em">Cada chunk guarda <code>source</code> y <code>page</code> para poder citar.</p>
+</section>
+
+<!-- 4 -->
+<section>
+  <h2>Armado del contexto</h2>
+  <p>Los chunks recuperados se numeran y se insertan en el prompt (<code>RAG_PROMPT</code> en <code>techniques.py</code>):</p>
+  <pre><code class="language-text">Respondé la pregunta usando SOLO el contexto. Si el contexto no alcanza, decí que no lo sabés.
+Máximo tres oraciones, en español. Citá la fuente como (archivo, p. N).
+
+CONTEXTO
+{context}      # [1] (archivo.pdf, p. 45)\n texto del chunk ...
+
+PREGUNTA: {question}</code></pre>
+  <p>Con <code>--show-context</code> la CLI imprime los chunks y el prompt final de cada técnica.</p>
+</section>
+
+<!-- 5a -->
+<section>
+  <span class="tag">técnica 1 · línea base</span>
+  <h2>Sin contexto</h2>
+  <svg viewBox="0 0 700 120" role="img" aria-label="Pregunta directo al LLM">
+    <rect class="b" x="20" y="30" width="170" height="60" rx="10"/><text x="105" y="65">Pregunta</text>
+    <rect class="b" x="270" y="30" width="170" height="60" rx="10"/><text x="355" y="65">LLM</text>
+    <rect class="b" x="520" y="30" width="160" height="60" rx="10"/><text x="600" y="65">Respuesta</text>
+    <line x1="190" y1="60" x2="268" y2="60"/><line x1="440" y1="60" x2="518" y2="60"/>
+  </svg>
+  <p>Solo el conocimiento del modelo. Sirve para medir cuánto aporta el resto.</p>
+  <pre><code class="language-bash">uv run tabi ask "¿Qué es un cubo?" -t no_context --show-context</code></pre>
+</section>
+
+<!-- 5b -->
+<section>
+  <span class="tag">técnica 2 · léxica</span>
+  <h2>RAG con BM25</h2>
+  <svg viewBox="0 0 900 120" role="img" aria-label="Pregunta, BM25, prompt, LLM">
+    <rect class="b" x="10" y="30" width="140" height="60" rx="10"/><text x="80" y="65">Pregunta</text>
+    <rect class="h" x="220" y="30" width="170" height="60" rx="10"/><text x="305" y="55">BM25</text><text class="s" x="305" y="75">top-4 por palabras</text>
+    <rect class="b" x="460" y="30" width="170" height="60" rx="10"/><text x="545" y="65">Prompt + contexto</text>
+    <rect class="b" x="700" y="30" width="140" height="60" rx="10"/><text x="770" y="65">LLM</text>
+    <line x1="150" y1="60" x2="218" y2="60"/><line x1="390" y1="60" x2="458" y2="60"/><line x1="630" y1="60" x2="698" y2="60"/>
+  </svg>
+  <p>Coincidencia exacta de términos. Excelente con nombres propios y siglas; ciega a sinónimos.</p>
+  <pre><code class="language-bash">uv run tabi ask "¿Quién es Ralph Kimball?" -t bm25 --show-context</code></pre>
+</section>
+
+<!-- 5c -->
+<section>
+  <span class="tag">técnica 3 · semántica</span>
+  <h2>RAG vectorial (Chroma)</h2>
+  <svg viewBox="0 0 900 120" role="img" aria-label="Pregunta, embedding, Chroma, prompt, LLM">
+    <rect class="b" x="10" y="30" width="120" height="60" rx="10"/><text x="70" y="65">Pregunta</text>
+    <rect class="h" x="190" y="30" width="150" height="60" rx="10"/><text x="265" y="55">Embedding</text><text class="s" x="265" y="75">embeddinggemma</text>
+    <rect class="h" x="400" y="30" width="150" height="60" rx="10"/><text x="475" y="55">Chroma</text><text class="s" x="475" y="75">top-4 coseno</text>
+    <rect class="b" x="610" y="30" width="130" height="60" rx="10"/><text x="675" y="65">Prompt</text>
+    <rect class="b" x="790" y="30" width="100" height="60" rx="10"/><text x="840" y="65">LLM</text>
+    <line x1="130" y1="60" x2="188" y2="60"/><line x1="340" y1="60" x2="398" y2="60"/><line x1="550" y1="60" x2="608" y2="60"/><line x1="740" y1="60" x2="788" y2="60"/>
+  </svg>
+  <p>Busca por significado: encuentra «almacén de datos» aunque la pregunta diga «data warehouse».</p>
+  <pre><code class="language-bash">uv run tabi ask "¿Para qué sirve un data warehouse?" -t vector --show-context</code></pre>
+</section>
+
+<!-- 5d -->
+<section>
+  <span class="tag">técnica 4 · híbrida</span>
+  <h2>Ensemble: BM25 + vectorial (RRF 50/50)</h2>
+  <svg viewBox="0 0 900 170" role="img" aria-label="BM25 y Chroma fusionados con RRF">
+    <rect class="b" x="10" y="60" width="120" height="50" rx="10"/><text x="70" y="90">Pregunta</text>
+    <rect class="h" x="210" y="10" width="150" height="50" rx="10"/><text x="285" y="40">BM25</text>
+    <rect class="h" x="210" y="110" width="150" height="50" rx="10"/><text x="285" y="140">Chroma</text>
+    <rect class="h" x="440" y="60" width="170" height="50" rx="10"/><text x="525" y="82">RRF</text><text class="s" x="525" y="99">peso 0.5 / 0.5</text>
+    <rect class="b" x="690" y="60" width="200" height="50" rx="10"/><text x="790" y="90">Prompt → LLM</text>
+    <line x1="130" y1="78" x2="208" y2="40"/><line x1="130" y1="92" x2="208" y2="135"/><line x1="360" y1="40" x2="438" y2="76"/><line x1="360" y1="135" x2="438" y2="96"/><line x1="610" y1="85" x2="688" y2="85"/>
+  </svg>
+  <p>Cada lista aporta <code>peso / (60 + posición)</code>; se suman y se ordenan. Mismo 50/50 que el repo 2024.</p>
+  <pre><code class="language-bash">uv run tabi ask "¿Qué es una dimensión?" -t ensemble --show-context</code></pre>
+</section>
+
+<!-- 5e -->
+<section>
+  <span class="tag">técnica 5 · agente</span>
+  <h2>Agente con tool de búsqueda</h2>
+  <svg viewBox="0 0 800 190" role="img" aria-label="Agente que llama a search_docs en bucle">
+    <rect class="b" x="10" y="70" width="130" height="50" rx="10"/><text x="75" y="100">Pregunta</text>
+    <rect class="h" x="230" y="55" width="190" height="80" rx="10"/><text x="325" y="90">Agent (Strands)</text><text class="s" x="325" y="110">decide si buscar</text>
+    <rect class="w" x="510" y="10" width="190" height="50" rx="10"/><text x="605" y="40">tool search_docs</text>
+    <rect class="b" x="510" y="130" width="190" height="50" rx="10"/><text x="605" y="160">Respuesta citada</text>
+    <line x1="140" y1="95" x2="228" y2="95"/><line x1="420" y1="75" x2="508" y2="38"/><path class="a" d="M508 50 Q440 70 424 85"/><line x1="420" y1="118" x2="508" y2="152"/>
+  </svg>
+  <p>Ya no hay un único paso fijo: el LLM elige la consulta, puede repetirla y reformularla.</p>
+  <pre><code class="language-bash">uv run tabi ask "Compará esquema estrella y copo de nieve" -t agent</code></pre>
+</section>
+
+<!-- 5f -->
+<section>
+  <span class="tag">técnica 6 · multi-agente</span>
+  <h2>Multi-agente: agents-as-tools</h2>
+  <svg viewBox="0 0 900 200" role="img" aria-label="Orquestador con clasificador, agente de docs, agente web y resumen">
+    <rect class="b" x="10" y="75" width="110" height="50" rx="10"/><text x="65" y="105">Pregunta</text>
+    <rect class="h" x="190" y="60" width="160" height="80" rx="10"/><text x="270" y="95">Orquestador</text><text class="s" x="270" y="115">Strands Agent</text>
+    <rect class="w" x="440" y="5" width="190" height="42" rx="10"/><text x="535" y="31">1 classify_relevance</text>
+    <rect class="w" x="440" y="58" width="190" height="42" rx="10"/><text x="535" y="84">2 docs_agent</text>
+    <rect class="w" x="440" y="111" width="190" height="42" rx="10"/><text x="535" y="137">3 web_agent (SearXNG)</text>
+    <rect class="b" x="720" y="75" width="170" height="50" rx="10"/><text x="805" y="105">4 Resumen</text>
+    <line x1="120" y1="100" x2="188" y2="100"/><line x1="350" y1="80" x2="438" y2="30"/><line x1="350" y1="100" x2="438" y2="79"/><line x1="350" y1="120" x2="438" y2="132"/><line x1="630" y1="100" x2="718" y2="100"/>
+  </svg>
+  <p>Si es <code>NO_RELEVANTE</code> corta; si los docs no alcanzan, completa con la web.</p>
+  <pre><code class="language-bash">docker compose up -d searxng   # una vez, para web_agent
+uv run tabi ask "¿Qué novedades tiene Apache Iceberg?" -t multi</code></pre>
+</section>
+
+<!-- 6 -->
+<section>
+  <h2>OpenRouter + Strands</h2>
+  <p>Un solo cliente OpenAI-compatible; cambiar de modelo es cambiar un slug en <code>.env</code>.</p>
+  <pre><code class="language-python">from strands.models.openai import OpenAIModel
+
+OpenAIModel(
+    client_args={"api_key": os.environ["OPENROUTER_API_KEY"],
+                 "base_url": "https://openrouter.ai/api/v1"},
+    model_id=os.getenv("TABI_LLM", "anthropic/claude-haiku-4.5"),
+    params={"temperature": 0.1},
+)</code></pre>
+  <p class="muted" style="font-size:.7em">La API key se carga con <code>python-dotenv</code> desde <code>.env</code>. Los embeddings siguen locales (Ollama).</p>
+</section>
+
+<!-- 7 -->
+<section>
+  <h2>Strands Evals: medir, no opinar</h2>
+  <div class="row">
+    <div>
+      <ul>
+        <li><code>Case</code>: pregunta + respuesta esperada</li>
+        <li><code>Experiment</code>: corre cada técnica como <em>task</em> sobre los mismos casos</li>
+        <li><code>OutputEvaluator</code> con LLM-juez (rúbrica de correctitud)</li>
+        <li><code>ToolCalled</code> para verificar la trayectoria de los agentes</li>
+      </ul>
+    </div>
+    <pre><code class="language-python">exp = Experiment(
+  cases=CASES,
+  evaluators=[OutputEvaluator(rubric=RUBRIC,
+                              model=judge_model()),
+              ToolCalled("search_docs")])
+report = exp.run_evaluations(task_for(ask))</code></pre>
+  </div>
+  <p>Resultado: una tabla por técnica con puntajes comparables. <span class="muted">(Código en <code>evals/</code>.)</span></p>
+</section>
+
+<!-- 8 -->
+<section>
+  <h2>¿Cuál uso?</h2>
+  <table>
+    <tr><th>Técnica</th><th>Fortaleza</th><th>Debilidad</th><th>Cuándo</th></tr>
+    <tr><td>Sin contexto</td><td>Rápida, barata</td><td>Alucina, sin fuente</td><td>Línea base</td></tr>
+    <tr><td>BM25</td><td>Términos exactos, nombres</td><td>No entiende sinónimos</td><td>Siglas, autores</td></tr>
+    <tr><td>Vectorial</td><td>Significado</td><td>Falla con términos raros</td><td>Preguntas conceptuales</td></tr>
+    <tr><td>Ensemble</td><td>Combina ambas</td><td>Dos índices, más ajuste</td><td>Default razonable</td></tr>
+    <tr><td>Agente + tool</td><td>Reformula y repite</td><td>Más latencia y costo</td><td>Preguntas compuestas</td></tr>
+    <tr><td>Multi-agente</td><td>Filtra, usa la web</td><td>Más piezas que fallan</td><td>Dominio abierto</td></tr>
+  </table>
+  <p class="muted" style="font-size:.65em">Orientativo: los números reales salen de Strands Evals.</p>
+</section>
+
+<!-- 9 -->
+<section>
+  <h2>Cierre y próximos pasos</h2>
+  <ul>
+    <li>Mismo motor, seis formas de pedir contexto: la diferencia está en <em>quién decide qué buscar</em>.</li>
+    <li>Evaluar cada cambio con el mismo dataset antes de creer que mejoró.</li>
+    <li>Siguientes: reranking, memoria de sesión, trazas (OTEL/Langfuse), más casos de eval.</li>
+  </ul>
+  <p class="accent"><code>github.com/JonathanLoscalzo</code> · agentic-tabi-2026</p>
+</section>
+
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script>
+  Reveal.initialize({ hash: true, width: 1100, height: 700, margin: 0.06, transition: "fade", controls: true, progress: true });
+  // toggle de tema: persiste solo si localStorage está disponible
+  const root = document.documentElement, btn = document.getElementById("themeBtn");
+  try { const t = localStorage.getItem("tabi-theme"); if (t) root.dataset.theme = t; } catch (e) {}
+  btn.onclick = () => {
+    const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    root.dataset.theme = dark ? "light" : "dark";
+    try { localStorage.setItem("tabi-theme", root.dataset.theme); } catch (e) {}
+  };
+</script>
+</body>
+</html>
