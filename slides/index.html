@@ -107,6 +107,74 @@ make index   # descarga el libro si falta · data/*.pdf → chroma_db/</code></p
   <strong>Los PDFs no están en el repo:</strong> el libro es abierto (SEDICI, CC BY-NC-SA 4.0) y <code>make data</code> lo descarga; otro material de la cátedra hay que pedirlo.</p>
 </section>
 
+<!-- 3a -->
+<section>
+  <h2>Chunking: cortar el texto en pedazos</h2>
+  <svg viewBox="0 0 900 200" role="img" aria-label="Texto de una página cortado en chunks de 1000 caracteres con solape de 200">
+    <rect class="b" x="10" y="8" width="880" height="26" rx="6"/><text class="s" x="450" y="26">texto de una página (≈2200 caracteres)</text>
+    <rect class="h" x="10" y="48" width="400" height="34" rx="6"/><text x="210" y="71">chunk 1 · 0–1000</text>
+    <rect class="h" x="330" y="90" width="400" height="34" rx="6"/><text x="530" y="113">chunk 2 · 800–1800</text>
+    <rect class="h" x="650" y="132" width="240" height="34" rx="6"/><text x="770" y="155">chunk 3 · 1600–fin</text>
+    <rect class="w" x="330" y="48" width="80" height="76" rx="4" style="fill-opacity:.18"/><rect class="w" x="650" y="90" width="80" height="76" rx="4" style="fill-opacity:.18"/>
+    <text class="s" x="370" y="185">solape 200</text><text class="s" x="690" y="185">solape 200</text>
+  </svg>
+  <ul style="font-size:.8em">
+    <li>Se corta <strong>página por página</strong>: un chunk nunca cruza páginas, así que siempre se puede citar <code>(archivo, p. N)</code>.</li>
+    <li>Cada chunk tiene hasta <strong>1000 caracteres</strong> y avanza de a <strong>800</strong>: los últimos 200 se repiten en el siguiente, para no perder una idea cortada justo en el borde.</li>
+    <li>Compromiso: chunks chicos buscan con más precisión pero dan menos contexto; los grandes, al revés.</li>
+  </ul>
+  <p class="muted" style="font-size:.6em">Resultado: 441 chunks con los dos PDFs (largo medio 768). Limitación: el corte es por caracteres, no por oraciones, y el final de cada página puede dar chunks muy cortos.</p>
+</section>
+
+<!-- 3b -->
+<section>
+  <h2>Embeddings y Chroma</h2>
+  <svg viewBox="0 0 900 190" role="img" aria-label="Chunks a vectores guardados en Chroma; la pregunta se convierte en vector y se buscan los vecinos más cercanos">
+    <rect class="b" x="10" y="15" width="130" height="50" rx="10"/><text x="75" y="45">chunk</text>
+    <rect class="h" x="200" y="15" width="190" height="50" rx="10"/><text x="295" y="38">embeddinggemma</text><text class="s" x="295" y="55">Ollama, local</text>
+    <rect class="b" x="450" y="15" width="150" height="50" rx="10"/><text x="525" y="38">vector</text><text class="s" x="525" y="55">768 números</text>
+    <rect class="h" x="660" y="15" width="230" height="50" rx="10"/><text x="775" y="38">Chroma</text><text class="s" x="775" y="55">vector + texto + archivo/página</text>
+    <rect class="b" x="10" y="115" width="130" height="50" rx="10"/><text x="75" y="145">pregunta</text>
+    <rect class="h" x="200" y="115" width="190" height="50" rx="10"/><text x="295" y="145">embeddinggemma</text>
+    <rect class="b" x="450" y="115" width="150" height="50" rx="10"/><text x="525" y="145">vector</text>
+    <rect class="h" x="660" y="115" width="230" height="50" rx="10"/><text x="775" y="138">4 vecinos más cercanos</text><text class="s" x="775" y="155">distancia coseno</text>
+    <line x1="140" y1="40" x2="198" y2="40"/><line x1="390" y1="40" x2="448" y2="40"/><line x1="600" y1="40" x2="658" y2="40"/>
+    <line x1="140" y1="140" x2="198" y2="140"/><line x1="390" y1="140" x2="448" y2="140"/><line x1="600" y1="140" x2="658" y2="140"/>
+    <text class="s" x="450" y="100">indexar (una vez)  ↑   ·   preguntar (cada consulta)  ↓</text>
+  </svg>
+  <ul style="font-size:.8em">
+    <li>Un <strong>embedding</strong> es una lista de números que representa el <em>significado</em> del texto: textos parecidos quedan cerca.</li>
+    <li>Se embeben los chunks en lotes de 50 y se guardan en <code>chroma_db/</code>. Si ya hay datos, no se rehace (<code>make reindex</code> lo fuerza).</li>
+    <li>Al preguntar, la pregunta se convierte en vector con el <strong>mismo modelo</strong> y Chroma devuelve los chunks más cercanos.</li>
+  </ul>
+</section>
+
+<!-- 3c -->
+<section>
+  <h2>BM25: puntuar por palabras</h2>
+  <div class="row">
+    <div class="card">
+      <h3>Cómo puntúa cada chunk</h3>
+      <p style="font-size:.75em">Para cada palabra de la pregunta suma un peso, y el chunk con más suma gana. El peso sube si:</p>
+      <ul style="font-size:.7em">
+        <li>la palabra es <strong>rara</strong> en todo el corpus (<em>Kimball</em> pesa mucho; <em>es</em> casi nada)</li>
+        <li>aparece <strong>varias veces</strong> en el chunk, con rendimientos decrecientes</li>
+        <li>el chunk es <strong>corto</strong> (se normaliza por largo)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Cómo se carga</h3>
+      <ul style="font-size:.7em">
+        <li><strong>No usa Chroma ni embeddings.</strong> Se arma en memoria al iniciar, leyendo los PDFs y cortando los mismos chunks.</li>
+        <li>Tokeniza en minúsculas con <code>\w+</code>: <code>¿Quién es Ralph Kimball?</code> → <code>quién · es · ralph · kimball</code></li>
+        <li>Sin stemming ni lista de stopwords: «dimensión» y «dimensiones» son palabras distintas.</li>
+        <li>Parámetros por defecto de <code>rank-bm25</code> (<code>k1=1.5</code>, <code>b=0.75</code>).</li>
+      </ul>
+    </div>
+  </div>
+  <p class="muted" style="font-size:.65em">Por eso encuentra nombres y siglas exactos, y por eso no entiende sinónimos: eso lo cubre la búsqueda vectorial.</p>
+</section>
+
 <!-- 4 -->
 <section>
   <h2>Armado del contexto</h2>
