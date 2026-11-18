@@ -20,7 +20,7 @@
     --bg: #15161a; --fg: #ececea; --muted: #9a9a93; --accent: #4fd1a1; --accent2: #f0a35a;
     --card: #1e2026; --line: #34363e; --code-bg: #101114;
   }
-  html, body { background: var(--bg); }
+  html, body, .reveal-viewport, .reveal { background: var(--bg) !important; }
   .reveal { color: var(--fg); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 30px; }
   .reveal .slides section { text-align: left; }
   .reveal h1, .reveal h2, .reveal h3 { color: var(--fg); text-transform: none; font-weight: 700; letter-spacing: -0.01em; }
@@ -30,7 +30,7 @@
   .reveal .muted { color: var(--muted); }
   .reveal .accent { color: var(--accent); }
   .reveal pre { width: 100%; box-shadow: none; font-size: .5em; margin: .6em 0; }
-  .reveal pre code { background: var(--code-bg); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: .8em 1em; max-height: 520px; }
+  .reveal pre code { display: block; white-space: pre; overflow: auto; text-align: left; background: var(--code-bg); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: .8em 1em; max-height: 520px; }
   .reveal code { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
   .reveal p code, .reveal li code, .reveal td code { background: var(--code-bg); border: 1px solid var(--line); border-radius: 4px; padding: 0 .3em; font-size: .85em; }
   .row { display: flex; gap: 1.2em; align-items: stretch; }
@@ -68,6 +68,7 @@
   <h1>agentic-tabi-<span class="accent">2026</span></h1>
   <p>Hacer preguntas sobre el libro de cátedra con distintas técnicas, en un mismo código, y compararlas.</p>
   <p class="muted" style="font-size:.7em">Strands Agents · OpenRouter · Chroma + BM25 · Strands Evals</p>
+  <p class="muted" style="font-size:.6em">Seis técnicas, un chat para probarlas y evals para compararlas.</p>
   <aside class="notes">Objetivo: mostrar cómo cambia la respuesta según cómo se arma el contexto y quién decide qué buscar.</aside>
 </section>
 
@@ -100,9 +101,10 @@
     <rect class="h" x="400" y="125" width="170" height="60" rx="10"/><text x="485" y="160">BM25 en memoria</text>
     <line x1="130" y1="100" x2="188" y2="100"/><line x1="340" y1="90" x2="398" y2="55"/><line x1="340" y1="110" x2="398" y2="150"/><line x1="570" y1="45" x2="628" y2="45"/>
   </svg>
-  <pre><code class="language-bash">uv run ollama pull embeddinggemma   # una vez
-uv run tabi index                   # data/*.pdf → chroma_db/</code></pre>
-  <p class="muted" style="font-size:.7em">Cada chunk guarda <code>source</code> y <code>page</code> para poder citar.</p>
+  <pre><code class="language-bash">make setup   # deps + ollama pull embeddinggemma + .env
+make index   # data/*.pdf → chroma_db/   (make reindex para rehacerlo)</code></pre>
+  <p class="muted" style="font-size:.7em">Cada chunk guarda <code>source</code> y <code>page</code> para poder citar.
+  <strong>Los PDFs no están en el repo:</strong> el material de la cátedra hay que pedirlo en la cátedra y copiarlo en <code>data/</code>.</p>
 </section>
 
 <!-- 4 -->
@@ -116,7 +118,7 @@ CONTEXTO
 {context}      # [1] (archivo.pdf, p. 45)\n texto del chunk ...
 
 PREGUNTA: {question}</code></pre>
-  <p>Con <code>--show-context</code> la CLI imprime los chunks y el prompt final de cada técnica.</p>
+  <p>Con <code>--show-context</code> la CLI imprime los chunks y el prompt final de cada técnica. El chat los muestra en un desplegable.</p>
 </section>
 
 <!-- 5a -->
@@ -176,7 +178,7 @@ PREGUNTA: {question}</code></pre>
     <rect class="b" x="690" y="60" width="200" height="50" rx="10"/><text x="790" y="90">Prompt → LLM</text>
     <line x1="130" y1="78" x2="208" y2="40"/><line x1="130" y1="92" x2="208" y2="135"/><line x1="360" y1="40" x2="438" y2="76"/><line x1="360" y1="135" x2="438" y2="96"/><line x1="610" y1="85" x2="688" y2="85"/>
   </svg>
-  <p>Cada lista aporta <code>peso / (60 + posición)</code>; se suman y se ordenan. Mismo 50/50 que el repo 2024.</p>
+  <p>Dos búsquedas: Chroma (la base vectorial) y BM25 (índice en memoria sobre los mismos chunks). Cada lista aporta <code>peso / (60 + posición)</code>; se suman y quedan los 4 mejores. Mismo 50/50 que el repo 2024.</p>
   <pre><code class="language-bash">uv run tabi ask "¿Qué es una dimensión?" -t ensemble --show-context</code></pre>
 </section>
 
@@ -184,15 +186,26 @@ PREGUNTA: {question}</code></pre>
 <section>
   <span class="tag">técnica 5 · agente</span>
   <h2>Agente con tool de búsqueda</h2>
-  <svg viewBox="0 0 800 190" role="img" aria-label="Agente que llama a search_docs en bucle">
+  <svg style="max-height:150px" viewBox="0 0 800 190" role="img" aria-label="Agente que llama a search_docs en bucle">
     <rect class="b" x="10" y="70" width="130" height="50" rx="10"/><text x="75" y="100">Pregunta</text>
     <rect class="h" x="230" y="55" width="190" height="80" rx="10"/><text x="325" y="90">Agent (Strands)</text><text class="s" x="325" y="110">decide si buscar</text>
     <rect class="w" x="510" y="10" width="190" height="50" rx="10"/><text x="605" y="40">tool search_docs</text>
     <rect class="b" x="510" y="130" width="190" height="50" rx="10"/><text x="605" y="160">Respuesta citada</text>
     <line x1="140" y1="95" x2="228" y2="95"/><line x1="420" y1="75" x2="508" y2="38"/><path class="a" d="M508 50 Q440 70 424 85"/><line x1="420" y1="118" x2="508" y2="152"/>
   </svg>
-  <p>Ya no hay un único paso fijo: el LLM elige la consulta, puede repetirla y reformularla.</p>
-  <pre><code class="language-bash">uv run tabi ask "Compará esquema estrella y copo de nieve" -t agent</code></pre>
+  <div class="row" style="font-size:.7em">
+    <div class="card">
+      <h3>ensemble: pipeline fijo</h3>
+      <p>Busca <em>una vez</em> con tu pregunta tal cual y responde en una sola llamada al modelo.</p>
+    </div>
+    <div class="card">
+      <h3>agent: el modelo decide</h3>
+      <p>Usa ese mismo ensemble como herramienta, pero elige <em>con qué texto</em> buscar, cuántas veces y cuándo parar.</p>
+    </div>
+  </div>
+  <p style="font-size:.7em">«¿En qué se diferencian Kimball e Inmon?» → el agente buscó <code>Inmon enfoque top-down…</code> y <code>Kimball bus matrix…</code> por separado.</p>
+  <pre><code class="language-bash">make ask Q="¿En qué se diferencian Kimball e Inmon?" T=agent   # muestra consultas y chunks</code></pre>
+  <p class="muted" style="font-size:.65em">Cada corrida de agent/multi guarda la conversación completa en <code>tmp/conversations/</code> (ignorada por git).</p>
 </section>
 
 <!-- 5f -->
@@ -209,45 +222,107 @@ PREGUNTA: {question}</code></pre>
     <line x1="120" y1="100" x2="188" y2="100"/><line x1="350" y1="80" x2="438" y2="30"/><line x1="350" y1="100" x2="438" y2="79"/><line x1="350" y1="120" x2="438" y2="132"/><line x1="630" y1="100" x2="718" y2="100"/>
   </svg>
   <p>Si es <code>NO_RELEVANTE</code> corta; si los docs no alcanzan, completa con la web.</p>
-  <pre><code class="language-bash">docker compose up -d searxng   # una vez, para web_agent
-uv run tabi ask "¿Qué novedades tiene Apache Iceberg?" -t multi</code></pre>
+  <pre><code class="language-bash">make up                                                     # SearXNG en docker, para web_agent
+make ask Q="¿Qué novedades tiene Apache Iceberg?" T=multi</code></pre>
 </section>
 
-<!-- 6 -->
+<!-- 6a -->
+<section>
+  <h2>El cliente de chat</h2>
+  <pre><code class="language-bash">make chat   # Streamlit</code></pre>
+  <div class="row">
+    <div>
+      <ul>
+        <li><strong>Modelo</strong>: selector con todo el catálogo de OpenRouter</li>
+        <li><strong>Técnicas</strong>: una o varias, lado a lado</li>
+        <li><strong>Contexto</strong>: chunks, prompt armado, tools y consultas del agente</li>
+        <li><strong>Índice</strong>: cuántos chunks hay y botón para indexar</li>
+      </ul>
+    </div>
+    <div>
+      <ul>
+        <li>Pestaña <strong>📖 Técnicas</strong>: la explicación de cada una</li>
+        <li>Pestaña <strong>🧪 Evals</strong>: cómo se mide y los últimos resultados</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 6b -->
 <section>
   <h2>OpenRouter + Strands</h2>
-  <p>Un solo cliente OpenAI-compatible; cambiar de modelo es cambiar un slug en <code>.env</code>.</p>
+  <p>Un solo cliente OpenAI-compatible: cambiar de modelo es cambiar un slug.</p>
   <pre><code class="language-python">from strands.models.openai import OpenAIModel
 
 OpenAIModel(
     client_args={"api_key": os.environ["OPENROUTER_API_KEY"],
                  "base_url": "https://openrouter.ai/api/v1"},
-    model_id=os.getenv("TABI_LLM", "anthropic/claude-haiku-4.5"),
+    model_id=os.getenv("TABI_LLM", "anthropic/claude-haiku-5.5"),
     params={"temperature": 0.1},
 )</code></pre>
+  <pre><code class="language-bash">make models F=claude                               # lista/filtra el catálogo
+make ask Q="..." T=agent M=openai/gpt-5-mini       # otro modelo en la CLI
+make eval M=openai/gpt-5-mini                      # y también en los evals</code></pre>
   <p class="muted" style="font-size:.7em">La API key se carga con <code>python-dotenv</code> desde <code>.env</code>. Los embeddings siguen locales (Ollama).</p>
 </section>
 
-<!-- 7 -->
+<!-- 7a -->
 <section>
   <h2>Strands Evals: medir, no opinar</h2>
   <div class="row">
     <div>
       <ul>
-        <li><code>Case</code>: pregunta + respuesta esperada</li>
-        <li><code>Experiment</code>: corre cada técnica como <em>task</em> sobre los mismos casos</li>
-        <li><code>OutputEvaluator</code> con LLM-juez (rúbrica de correctitud)</li>
-        <li><code>ToolCalled</code> para verificar la trayectoria de los agentes</li>
+        <li><code>Case</code>: 12 preguntas con respuesta esperada (2 fuera de tema)</li>
+        <li><code>Experiment</code>: cada técnica corre sobre los mismos casos</li>
+        <li><code>correctness</code>: LLM juez con rúbrica</li>
+        <li><code>faithfulness</code>: ¿es fiel al contexto de la conversación?</li>
+        <li><code>relevance</code>: ¿responde lo que se preguntó?</li>
+        <li><code>tool_called</code>: ¿el agente usó la tool esperada? (sin juez)</li>
       </ul>
     </div>
     <pre><code class="language-python">exp = Experiment(
   cases=CASES,
-  evaluators=[OutputEvaluator(rubric=RUBRIC,
-                              model=judge_model()),
-              ToolCalled("search_docs")])
-report = exp.run_evaluations(task_for(ask))</code></pre>
+  evaluators=[
+    OutputEvaluator(rubric=RUBRIC, model=judge),
+    FaithfulnessEvaluator(model=judge),
+    ResponseRelevanceEvaluator(model=judge),
+    ToolCalled("search_docs")])
+report = await exp.run_evaluations_async(
+    task, max_workers=4)</code></pre>
   </div>
-  <p>Resultado: una tabla por técnica con puntajes comparables. <span class="muted">(Código en <code>evals/</code>.)</span></p>
+  <p class="muted" style="font-size:.65em">Fidelidad y relevancia leen las trazas OpenTelemetry de cada caso. Una línea de progreso por caso mientras corre.</p>
+</section>
+
+<!-- 7b -->
+<section>
+  <h2>Resultados</h2>
+  <table>
+    <tr><th>Técnica</th><th>correctness</th><th>faithfulness</th><th>relevance</th><th>tool_called</th></tr>
+    <tr><td>Sin contexto</td><td>0.86</td><td>1.00</td><td>1.00</td><td>–</td></tr>
+    <tr><td>BM25</td><td>0.75</td><td>0.98</td><td>0.94</td><td>–</td></tr>
+    <tr><td>Vectorial</td><td>0.83</td><td>0.98</td><td>0.96</td><td>–</td></tr>
+    <tr><td>Ensemble</td><td>0.82</td><td>1.00</td><td>0.92</td><td>–</td></tr>
+    <tr><td>Agente</td><td>0.80</td><td>0.94</td><td>0.94</td><td>1.00</td></tr>
+    <tr><td>Multi-agente</td><td>0.86</td><td>0.90</td><td>0.98</td><td>1.00</td></tr>
+  </table>
+  <ul style="font-size:.7em">
+    <li>Con 12 casos, las diferencias de <code>correctness</code> (0.75–0.86) no alcanzan para elegir un ganador.</li>
+    <li>Sin contexto puntúa alto porque las preguntas son definiciones generales; la métrica no premia citar los libros.</li>
+    <li>Su fidelidad de 1.00 no significa que esté anclada: sin contexto no hay nada que contradecir.</li>
+  </ul>
+  <p class="muted" style="font-size:.6em">claude-haiku-5.5 como modelo y como juez · 2026-11-18</p>
+</section>
+
+<!-- 7c -->
+<section>
+  <h2>Evals en GitHub Actions</h2>
+  <ul>
+    <li><strong>Solo manual</strong>: Actions → Evals → Run workflow (<code>workflow_dispatch</code>)</li>
+    <li>Elegís <strong>modelo</strong>, <strong>técnicas</strong> y casos en paralelo</li>
+    <li>En el runner: Ollama + <code>embeddinggemma</code>, SearXNG con docker, indexado y evals</li>
+    <li>La tabla de resultados queda en el <strong>summary</strong> de la corrida</li>
+    <li>Secrets: <code>OPENROUTER_API_KEY</code> y <code>DATA_URL</code> (link a un .zip con los PDFs, que no están en el repo)</li>
+  </ul>
 </section>
 
 <!-- 8 -->
@@ -259,10 +334,10 @@ report = exp.run_evaluations(task_for(ask))</code></pre>
     <tr><td>BM25</td><td>Términos exactos, nombres</td><td>No entiende sinónimos</td><td>Siglas, autores</td></tr>
     <tr><td>Vectorial</td><td>Significado</td><td>Falla con términos raros</td><td>Preguntas conceptuales</td></tr>
     <tr><td>Ensemble</td><td>Combina ambas</td><td>Dos índices, más ajuste</td><td>Default razonable</td></tr>
-    <tr><td>Agente + tool</td><td>Reformula y repite</td><td>Más latencia y costo</td><td>Preguntas compuestas</td></tr>
+    <tr><td>Agente + tool</td><td>Decide qué buscar, reformula y repite</td><td>Más latencia y costo</td><td>Preguntas compuestas</td></tr>
     <tr><td>Multi-agente</td><td>Filtra, usa la web</td><td>Más piezas que fallan</td><td>Dominio abierto</td></tr>
   </table>
-  <p class="muted" style="font-size:.65em">Orientativo: los números reales salen de Strands Evals.</p>
+  <p class="muted" style="font-size:.65em">Orientativo: con 12 casos los evals no separan claramente a las técnicas (ver Resultados).</p>
 </section>
 
 <!-- 9 -->
@@ -271,9 +346,10 @@ report = exp.run_evaluations(task_for(ask))</code></pre>
   <ul>
     <li>Mismo motor, seis formas de pedir contexto: la diferencia está en <em>quién decide qué buscar</em>.</li>
     <li>Evaluar cada cambio con el mismo dataset antes de creer que mejoró.</li>
-    <li>Siguientes: reranking, memoria de sesión, trazas (OTEL/Langfuse), más casos de eval.</li>
+    <li>El chat y los evals sirven para ver <em>y</em> medir esa diferencia con el mismo código.</li>
+    <li>Siguientes: más casos de eval y preguntas que exijan los libros, <code>TrajectoryEvaluator</code>, otro modelo como juez, reranking, memoria de sesión.</li>
   </ul>
-  <p class="accent"><code>github.com/JonathanLoscalzo</code> · agentic-tabi-2026</p>
+  <p class="accent"><code>github.com/JonathanLoscalzo/agentic-tabi-2026</code></p>
 </section>
 
 </div></div>
