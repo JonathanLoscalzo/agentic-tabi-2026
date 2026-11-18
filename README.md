@@ -38,6 +38,8 @@ Por defecto: `TABI_LLM` en `.env`.
 
 ## Evals (Strands Evals)
 
+Cómo funcionan y qué miden: [`docs/evals.md`](docs/evals.md) (también en la pestaña **🧪 Evals** del chat, con los últimos resultados).
+
 ```bash
 make eval                      # todas las técnicas con el modelo por defecto
 make eval M=openai/gpt-5-mini  # evalúa otro modelo (el juez es siempre TABI_JUDGE_LLM)

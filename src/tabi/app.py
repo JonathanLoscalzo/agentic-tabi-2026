@@ -1,4 +1,5 @@
 """Cliente de chat: uv run tabi chat  (Streamlit)"""
+import json
 import os
 import re
 
@@ -50,14 +51,39 @@ with st.sidebar:
             index.rebuild()
         st.rerun()
 
-chat_tab, docs_tab = st.tabs(["💬 Chat", "📖 Técnicas"])
+EVALS_DOC = (config.ROOT / "docs" / "evals.md").read_text()
+
+
+def eval_results() -> list[dict]:
+    """Promedio por evaluador de cada corrida guardada en evals/results/."""
+    rows = []
+    for f in sorted((config.ROOT / "evals" / "results").glob("*__*.json")):
+        d = json.loads(f.read_text())
+        model, technique = f.stem.split("__", 1)
+        row = {"modelo": model.replace("_", "/", 1), "técnica": technique}
+        for ev in {c["evaluator"] for c in d["cases"]}:
+            sc = [x for c, x in zip(d["cases"], d["scores"]) if c["evaluator"] == ev]
+            row[ev] = round(sum(sc) / len(sc), 2)
+        rows.append(row)
+    return rows
+
+
+chat_tab, docs_tab, evals_tab = st.tabs(["💬 Chat", "📖 Técnicas", "🧪 Evals"])
+
+with evals_tab:
+    st.markdown(EVALS_DOC)
+    st.subheader("Últimos resultados")
+    rows = eval_results()
+    if rows:
+        st.dataframe(rows, hide_index=True, width="stretch")
+    else:
+        st.info("Todavía no hay corridas. Ejecutá `make eval`.")
 
 with docs_tab:
     st.markdown(DOC)
 
 with chat_tab:
     msgs = st.session_state.setdefault("msgs", [])
-
 
     def render(m):
         for name, r in m["results"].items():
@@ -72,7 +98,6 @@ with chat_tab:
                         for h in r.contexts:
                             st.markdown(f"**{h['source']}, p. {h['page']}**\n\n{h['text'][:400]}…")
                         st.code(r.prompt, language="text")
-
 
     for m in msgs:
         st.chat_message("user").write(m["q"])
