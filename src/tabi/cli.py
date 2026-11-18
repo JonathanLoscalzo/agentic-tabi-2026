@@ -39,6 +39,8 @@ def main():
         if r.tools:
             print(f"tools: {r.tools}")
         if args.show_context:
+            if r.queries:
+                print(f"consultas del agente: {r.queries}")
             for h in r.contexts:
                 print(f"  - {h['source']} p.{h['page']}: {h['text'][:100]!r}")
             print(f"--- prompt ---\n{r.prompt}")

@@ -43,7 +43,9 @@ make eval                      # todas las técnicas con el modelo por defecto
 make eval M=openai/gpt-5-mini  # evalúa otro modelo (el juez es siempre TABI_JUDGE_LLM)
 ```
 
-Resultados en `evals/results/<modelo>__<técnica>.json`.
+Resultados en `evals/results/<modelo>__<técnica>.json`. Muestra una línea por caso mientras corre (`-w N` casos en paralelo, 4 por defecto).
+
+Las conversaciones completas de `agent` y `multi` (mensajes y tool calls de cada agente) se guardan en `tmp/conversations/` (ignorada por git).
 
 ## Slides
 

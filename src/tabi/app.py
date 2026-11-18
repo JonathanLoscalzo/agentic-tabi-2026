@@ -65,6 +65,8 @@ with chat_tab:
                 st.markdown(r.answer)
                 if r.tools:
                     st.caption(f"tools: {', '.join(r.tools)}")
+                if r.queries:
+                    st.markdown("**Consultas que eligió el agente:** " + " · ".join(f"`{x}`" for x in r.queries))
                 if r.contexts or r.prompt:
                     with st.expander("Contexto y prompt"):
                         for h in r.contexts:

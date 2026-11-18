@@ -53,7 +53,8 @@ Todas responden la misma pregunta sobre los libros de `data/`. Cambia **cómo se
 - **Cómo funciona**: el modelo recibe la pregunta y una tool `search_docs`, que ejecuta la búsqueda ensemble. Puede reformular la consulta, buscar varias veces y recién después responder.
 - **Fortaleza**: maneja preguntas compuestas, porque busca por partes.
 - **Debilidad**: más latencia y costo, ya que son varias llamadas al modelo.
-- **Contexto**: lo arma el agente. El chat muestra qué tools usó.
+- **Contexto**: lo arma el agente. El chat muestra las consultas que eligió hacer y los chunks que recuperó.
+- **Diferencia con `ensemble`**: el ensemble es un pipeline fijo (busca **una vez con tu pregunta tal cual** y responde en una sola llamada al modelo). El agente usa ese mismo ensemble como herramienta, pero **decide él** con qué texto buscar, cuántas veces y cuándo parar. Ejemplo: ante "¿En qué se diferencian Kimball e Inmon?", el ensemble hace una sola búsqueda con esa frase; el agente puede buscar "Kimball data marts" e "Inmon data warehouse" por separado. En preguntas simples el resultado es casi igual y el agente cuesta más.
 
 ## multi — Multi-agente
 
@@ -83,5 +84,5 @@ Todas responden la misma pregunta sobre los libros de `data/`. Cambia **cómo se
 | `bm25` | Términos exactos, nombres | No entiende sinónimos | Siglas, autores |
 | `vector` | Significado | Falla con términos raros | Preguntas conceptuales |
 | `ensemble` | Combina ambas | Dos índices | Default razonable |
-| `agent` | Reformula y repite | Más latencia y costo | Preguntas compuestas |
+| `agent` | Decide qué buscar, reformula y repite | Más latencia y costo | Preguntas compuestas |
 | `multi` | Filtra y usa la web | Más piezas que fallan | Dominio abierto |

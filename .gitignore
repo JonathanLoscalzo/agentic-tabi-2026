@@ -6,3 +6,4 @@ sessions/
 evals/results/
 *.egg-info/
 .DS_Store
+tmp/
