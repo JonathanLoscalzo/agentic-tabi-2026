@@ -42,7 +42,7 @@ jobs:
 
       - name: SearXNG (búsqueda web para multi)
         run: |
-          docker compose up -d
+          SEARXNG_SECRET=$(openssl rand -hex 32) docker compose up -d
           for i in $(seq 1 30); do curl -sf "localhost:8080/search?q=test&format=json" >/dev/null && break; sleep 2; done
 
       # El caché se borra si pasan 7 días sin usarlo (límite de GitHub; ampliarlo exige método de pago).

@@ -1,6 +1,6 @@
 use_default_settings: true
 server:
-    secret_key: "pangolindesquiciado" 
+    secret_key: "se-define-con-SEARXNG_SECRET"  # placeholder: la clave real llega por la variable SEARXNG_SECRET (ver docker-compose.yml)
 search:
     formats:
         - html

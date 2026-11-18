@@ -8,4 +8,6 @@ services:
     environment:
       - BASE_URL=http://localhost:8080/
       - INSTANCE_NAME=searxng
+      # clave de la interfaz web de SearXNG; `make up` la genera en .env. Pisa la de settings.yml.
+      - SEARXNG_SECRET=${SEARXNG_SECRET:?corré `make up`, que genera SEARXNG_SECRET en .env}
     #restart: unless-stopped

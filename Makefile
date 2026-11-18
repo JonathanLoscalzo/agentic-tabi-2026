@@ -1,4 +1,4 @@
-.PHONY: doctor data setup up down index reindex chat ask models eval slides
+.PHONY: slides-export doctor data setup up down index reindex chat ask models eval slides
 Q ?= ¿Quién es Ralph Kimball?
 T ?= all
 M ?=
@@ -15,7 +15,9 @@ setup:        ## chequea herramientas, instala deps, baja el modelo de embedding
 	ollama pull embeddinggemma
 	@test -f .env || cp .env.example .env
 	-@bash scripts/doctor.sh
-up:           ## SearXNG (búsqueda web para `multi`)
+up:           ## SearXNG (búsqueda web para `multi`); genera SEARXNG_SECRET en .env si falta
+	@test -f .env || cp .env.example .env
+	@grep -q '^SEARXNG_SECRET=.' .env || echo "SEARXNG_SECRET=$$(openssl rand -hex 32)" >> .env
 	docker compose up -d
 down:
 	docker compose down
@@ -31,5 +33,7 @@ models:       ## make models F=claude
 	uv run tabi models $(F)
 eval:         ## make eval M=openai/gpt-5-mini
 	uv run python evals/run.py $(MODEL)
+slides-export: ## exporta las diapositivas a PDF y PPTX en slides/export/
+	@bash scripts/export_slides.sh
 slides:
 	open slides/index.html

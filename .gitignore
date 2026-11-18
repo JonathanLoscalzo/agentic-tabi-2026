@@ -10,3 +10,4 @@ tmp/
 # material de la cátedra: no se sube
 data/*
 !data/README.md
+slides/export/

@@ -535,6 +535,7 @@ report = await exp.run_evaluations_async(
   // toggle de tema: persiste solo si localStorage está disponible
   const root = document.documentElement, btn = document.getElementById("themeBtn");
   try { const t = localStorage.getItem("tabi-theme"); if (t) root.dataset.theme = t; } catch (e) {}
+  if (location.search.includes("export")) btn.hidden = true;  // sin botón de tema al exportar a PDF/PPTX
   btn.onclick = () => {
     const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
     root.dataset.theme = dark ? "light" : "dark";

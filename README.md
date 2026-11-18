@@ -21,7 +21,7 @@ Explicación detallada de cada técnica: [`docs/tecnicas.md`](docs/tecnicas.md) 
 ```bash
 make doctor     # chequea uv, Ollama, docker, key, datos e índice y dice cómo arreglar lo que falte
 make setup      # chequea herramientas + uv sync + ollama pull embeddinggemma + crea .env (completar OPENROUTER_API_KEY)
-make up         # SearXNG en docker (búsqueda web para `multi`)
+make up         # SearXNG en docker (búsqueda web para `multi`); genera SEARXNG_SECRET en .env
 make index      # arma Chroma desde data/*.pdf
 make reindex    # rehacelo cada vez que cambies los PDFs de data/ (index no detecta cambios)
 ```
@@ -58,7 +58,9 @@ Las conversaciones completas de `agent` y `multi` (mensajes y tool calls de cada
 
 ## Slides
 
-Abrir `slides/index.html` en el navegador.
+Abrir `slides/index.html` en el navegador (se navega con las flechas; hacia abajo para profundizar).
+
+Para publicarlas en otro sitio: `make slides-export` genera `slides/export/agentic-tabi-2026.pdf` (vectorial, texto seleccionable) y `.pptx` (una imagen por diapositiva: no es editable). Necesita Node y Chrome (`CHROME=/ruta/a/chrome` en Linux).
 
 ## Estructura
 
@@ -66,3 +68,7 @@ Abrir `slides/index.html` en el navegador.
 - `evals/` — dataset y corrida de evaluación
 - `slides/` — presentación
 - `data/` — PDFs de la cátedra (no versionados)
+
+## Licencia
+
+El código y la documentación de este repo son [MIT](LICENSE). El material de la cátedra **no** está incluido ni cubierto por esta licencia: el libro de Díaz et al. se descarga de SEDICI bajo CC BY-NC-SA 4.0 (ver `data/README.md`).
