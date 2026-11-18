@@ -33,7 +33,9 @@ jobs:
       - name: Ollama + embeddinggemma
         run: |
           curl -fsSL https://ollama.com/install.sh | sh
+          nohup ollama serve > ollama.log 2>&1 &   # el runner no tiene systemd: lo levantamos a mano
           for i in $(seq 1 30); do curl -sf localhost:11434 >/dev/null && break; sleep 2; done
+          curl -sf localhost:11434 >/dev/null || { cat ollama.log; exit 1; }
           ollama pull embeddinggemma
 
       - name: SearXNG (búsqueda web para multi)
