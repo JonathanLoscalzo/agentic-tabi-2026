@@ -30,6 +30,13 @@ jobs:
 
       - run: uv sync
 
+      # Modelo de embeddings (~620 MB). Con caché, `ollama pull` solo verifica que esté y no lo baja de nuevo.
+      - name: Caché del modelo embeddinggemma
+        uses: actions/cache@v4
+        with:
+          path: ~/.ollama/models
+          key: ollama-model-embeddinggemma-v1
+
       - name: Ollama + embeddinggemma
         run: |
           curl -fsSL https://ollama.com/install.sh | sh
@@ -53,6 +60,14 @@ jobs:
 
       - name: Libro de cátedra (SEDICI, CC BY-NC-SA 4.0; no está en el repo)
         run: make data
+
+      # Índice de Chroma: depende del libro, del código de chunking/embeddings, del modelo y de las dependencias.
+      # Si cambia cualquiera de esos, la clave cambia y se reconstruye. Con caché, `tabi index` no hace nada.
+      - name: Caché del índice de Chroma
+        uses: actions/cache@v4
+        with:
+          path: chroma_db
+          key: chroma-embeddinggemma-${{ hashFiles('data/*.pdf', 'src/tabi/index.py', 'src/tabi/config.py', 'uv.lock') }}
 
       - run: uv run tabi index
 
