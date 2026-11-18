@@ -12,6 +12,8 @@ Embeddings con Ollama (`embeddinggemma`) y Chroma, igual que en los repos anteri
 | `agent` | Un agente Strands que decide cuándo llamar a `search_docs` |
 | `multi` | Orquestador: clasificador → agente de docs → agente web (SearXNG) → resumen |
 
+Explicación detallada de cada técnica: [`docs/tecnicas.md`](docs/tecnicas.md) (también en la pestaña **📖 Técnicas** del chat).
+
 ## Setup
 
 ```bash

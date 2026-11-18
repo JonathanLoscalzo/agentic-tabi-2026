@@ -21,7 +21,10 @@ TOOL_CHECK = {"agent": "search_docs", "multi": "classify_relevance"}
 
 def task_for(ask):
     def task(case):
-        r = ask(case.input)
+        try:
+            r = ask(case.input)
+        except Exception as e:  # un caso que falla (ej. error del modelo) no tumba la corrida; puntúa bajo
+            return {"output": f"ERROR: {e}", "trajectory": []}
         return {"output": r.answer, "trajectory": r.tools}  # tools: lista de nombres usados
 
     return task
